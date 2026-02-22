@@ -32,6 +32,7 @@ services:
 networks:
   labo05-network:
     external: true 
+    driver: bridge
 
 volumes:
   mysql_data:
