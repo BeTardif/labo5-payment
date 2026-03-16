@@ -2,6 +2,8 @@ services:
   payments_api:
     build: .
     container_name: payments_api 
+    env_file:
+      - .env
     environment:
       - PYTHONUNBUFFERED=1
     volumes:
@@ -21,8 +23,8 @@ services:
       MYSQL_DATABASE: labo05_payments_db
       MYSQL_USER: labo05
       MYSQL_PASSWORD: labo05
-    # ports:
-    #   - "3306:3306"
+    ports:
+       - "3307:3306"
     networks:
       - labo05-network
     volumes:

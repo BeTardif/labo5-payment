@@ -7,8 +7,38 @@ from logger import Logger
 from flask import Flask, request, jsonify
 from controllers.payment_controller import add_payment, process_payment, get_payment
 
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+
 app = Flask(__name__)
 logger = Logger.get_instance("payments")
+
+# TODO: Indiquez un nom pertinent à votre service
+resource = Resource.create({
+   "service.name": "payments-api",
+   "service.version": "1.0.0"
+})
+
+trace.set_tracer_provider(TracerProvider(resource=resource))
+tracer = trace.get_tracer(__name__)
+
+# Indiquez l'endpoint Jaeger (hostname dans Docker)
+otlp_exporter = OTLPSpanExporter(
+   endpoint="http://jaeger:4317",
+   insecure=True
+)
+
+span_processor = BatchSpanProcessor(otlp_exporter)
+trace.get_tracer_provider().add_span_processor(span_processor)
+
+# Automatic Flask instrumentation
+FlaskInstrumentor().instrument_app(app)
+RequestsInstrumentor().instrument()
 
 @app.route("/")
 def home():
